@@ -1,0 +1,45 @@
+appId: org.recorderstudio.app
+productName: Recorder Studio
+electronDist: node_modules/electron/dist
+directories:
+  output: release
+  buildResources: build
+files:
+  - dist/**/*
+  - dist-electron/**/*
+  - package.json
+  - LICENSE
+  - THIRD_PARTY.md
+  - THIRD_PARTY_OPENCUT_LICENSE
+asar: true
+asarUnpack:
+  - node_modules/ffmpeg-static/**
+  - node_modules/uiohook-napi/**
+  - node_modules/koffi/**
+npmRebuild: false
+afterPack: scripts/after-pack.cjs
+win:
+  icon: build/icon.ico
+  signAndEditExecutable: false
+  target:
+    - nsis
+    - portable
+nsis:
+  artifactName: Recorder-Studio-Setup-${version}-${arch}.${ext}
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  installerIcon: build/icon.ico
+  uninstallerIcon: build/icon.ico
+  installerHeaderIcon: build/icon.ico
+portable:
+  artifactName: Recorder-Studio-Portable-${version}-${arch}.${ext}
+mac:
+  icon: build/icon.png
+  category: public.app-category.video
+  target: dmg
+  extendInfo:
+    NSMicrophoneUsageDescription: Record your microphone with your screen.
+    NSCameraUsageDescription: Record a webcam overlay with your screen.

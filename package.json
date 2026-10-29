@@ -1,0 +1,56 @@
+{
+  "name": "recorder-studio",
+  "version": "0.5.1",
+  "private": true,
+  "description": "Free, open-source cinematic screen recording studio",
+  "license": "MIT",
+  "author": "Recorder Studio contributors",
+  "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "main": "dist-electron/electron/main.js",
+  "scripts": {
+    "dev": "tsc -p tsconfig.electron.json && node scripts/dev.mjs",
+    "dev:web": "vite --host 127.0.0.1",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.electron.json --noEmit",
+    "build": "npm run typecheck && vite build && tsc -p tsconfig.electron.json",
+    "start": "electron .",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "vitest run",
+    "test:playback": "npm run build && vite build --config vite.integration.config.ts && electron scripts/playback.cjs",
+    "test:desktop": "electron scripts/smoke.cjs",
+    "test:integration": "npm run build && vite build --config vite.integration.config.ts && electron scripts/integration.cjs",
+    "setup:win": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/setup-windows.ps1",
+    "dist:win": "npm run build && electron-builder --win nsis portable --x64",
+    "dist:portable": "npm run build && electron-builder --win portable --x64",
+    "pack:win": "npm run build && electron-builder --win --dir --x64"
+  },
+  "dependencies": {
+    "@fontsource/inter": "^5.3.0",
+    "@mediapipe/tasks-vision": "^1.1.1",
+    "@radix-ui/react-switch": "^1.4.1",
+    "@radix-ui/react-tabs": "^1.2.1",
+    "ffmpeg-static": "^5.3.0",
+    "framer-motion": "^14.5.0",
+    "koffi": "^3.3.3",
+    "lucide-react": "^1.61.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "uiohook-napi": "^1.5.5",
+    "zustand": "^5.0.16"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/node": "^26.6.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "electron": "^45.0.0",
+    "electron-builder": "^26.15.3",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.5",
+    "vitest": "^5.0.5"
+  }
+}

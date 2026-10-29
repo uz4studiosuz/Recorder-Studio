@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Recorder Studio — Free, open-source screen recorder for Windows</title>
+  <meta name="description" content="Beautiful screen recordings with automatic zooms, smooth cursor, webcam layouts and fast GPU export. Free and open source for Windows.">
+  <meta property="og:title" content="Recorder Studio — Beautiful screen recordings. Free forever.">
+  <meta property="og:description" content="Automatic zooms, smooth cursor, webcam layouts and fast GPU export. MIT licensed.">
+  <meta property="og:image" content="assets/og-image.png">
+  <meta name="theme-color" content="#0a0a0c">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script src="site.config.js"></script>
+  <script src="main.js" defer></script>
+</head>
+<body>
+  <div class="progress-bar" aria-hidden="true"></div>
+
+  <header class="nav" id="top">
+    <a class="brand" href="#top" aria-label="Recorder Studio home"><img class="brand-logo" src="assets/favicon.svg" alt="" width="30" height="30">Recorder Studio</a>
+    <nav class="nav-links" aria-label="Main">
+      <a href="#zoom">Features</a>
+      <a href="#layouts">Layouts</a>
+      <a href="#export">Export</a>
+      <a href="#open-source">Open source</a>
+    </nav>
+    <div class="nav-actions">
+      <a class="nav-github" data-link="github" href="#" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.68 0-1.25.45-2.28 1.18-3.08-.12-.29-.51-1.46.11-3.04 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.62 1.58.23 2.75.11 3.04.74.8 1.18 1.83 1.18 3.08 0 4.41-2.69 5.38-5.25 5.67.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg><span>GitHub</span></a>
+      <a class="button button-small" href="#download">Download</a>
+    </div>
+  </header>
+
+  <main>
+    <!-- HERO -->
+    <section class="hero">
+      <div class="hero-glow" aria-hidden="true"></div>
+      <a class="pill reveal" href="#open-source"><span class="pill-dot"></span><span data-text="version">v0.4</span> · Free &amp; open source · MIT</a>
+      <h1 class="hero-title reveal" style="--d: 1">Beautiful screen recordings.<br><span class="gradient-text">Free, forever.</span></h1>
+      <p class="hero-sub reveal" style="--d: 2">The open-source screen recorder for Windows that handles the hard parts — automatic zooms, a silky cursor, webcam layouts and fast GPU export. No account, no watermark, no subscription.</p>
+      <div class="hero-cta reveal" style="--d: 3">
+        <a class="button button-primary" data-link="installer" href="#download"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M3 5.5 10.5 4.4v7.1H3zm0 13 7.5 1.1v-7H3zm8.4 1.2L21 21V12.6h-9.6zm0-15.4v7.1H21V3z"/></svg>Download for Windows</a>
+        <a class="button button-ghost" data-link="github" href="#" target="_blank" rel="noopener">View source on GitHub</a>
+      </div>
+      <p class="hero-note reveal" style="--d: 4">Windows 10 / 11 · x64 · <span data-text="size">Installer &amp; portable</span></p>
+
+      <div class="hero-stage" data-hero>
+        <div class="window">
+          <div class="window-bar"><span class="window-title"><img src="assets/favicon.svg" alt="" width="16" height="16">Recorder Studio</span><span class="window-controls"><i></i><i></i><i></i></span></div>
+          <div class="slot slot-16x9" data-src="assets/hero.mp4" data-poster="assets/hero-poster.jpg" data-label="Hero video — app walkthrough (16:9)"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- USE CASES MARQUEE -->
+    <section class="marquee" aria-label="Made for">
+      <div class="marquee-track">
+        <span>Product demos</span><span>Tutorials</span><span>Online courses</span><span>Bug reports</span><span>Reels &amp; Shorts</span><span>Code walkthroughs</span><span>Onboarding videos</span><span>Release notes</span>
+        <span aria-hidden="true">Product demos</span><span aria-hidden="true">Tutorials</span><span aria-hidden="true">Online courses</span><span aria-hidden="true">Bug reports</span><span aria-hidden="true">Reels &amp; Shorts</span><span aria-hidden="true">Code walkthroughs</span><span aria-hidden="true">Onboarding videos</span><span aria-hidden="true">Release notes</span>
+      </div>
+    </section>
+
+    <!-- ZOOM -->
+    <section class="section" id="zoom">
+      <div class="section-head">
+        <p class="eyebrow reveal">Focus and zoom</p>
+        <h2 class="reveal" style="--d: 1">Nothing stays too small to read.</h2>
+        <p class="lead reveal" style="--d: 2">Recorder Studio watches where you click while recording and zooms in on the moments that matter. Every zoom is eased and balanced for you.</p>
+      </div>
+      <div class="tabs reveal" data-tabs data-autoplay="6000">
+        <div class="tab-list" role="tablist" aria-label="Zoom features">
+          <button role="tab" aria-selected="true">Automatic zoom</button>
+          <button role="tab">Manual zoom</button>
+          <button role="tab">Smart framing</button>
+          <span class="tab-indicator" aria-hidden="true"></span>
+        </div>
+        <div class="tab-panels">
+          <div class="tab-panel is-active" role="tabpanel"><div class="frame"><div class="slot slot-16x9" data-src="assets/zoom-auto.mp4" data-label="Automatic zoom clip"></div></div><p>Clicks become smooth zoom segments on the timeline, following the cursor between clicks.</p></div>
+          <div class="tab-panel" role="tabpanel"><div class="frame"><div class="slot slot-16x9" data-src="assets/zoom-manual.mp4" data-label="Manual zoom clip"></div></div><p>Double-click the zoom lane, drag the block, click the preview to aim. Done.</p></div>
+          <div class="tab-panel" role="tabpanel"><div class="frame"><div class="slot slot-16x9" data-src="assets/zoom-framing.mp4" data-label="Smart framing clip"></div></div><p>Your webcam glides aside when the cursor comes near, so it never covers what you are showing.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCROLL ZOOM SHOWCASE -->
+    <section class="zoom-scroll" data-zoom-scroll aria-label="Zoom showcase">
+      <div class="zoom-sticky">
+        <div class="zoom-canvas">
+          <div class="zoom-inner"><div class="slot slot-16x9" data-src="assets/zoom-screenshot.png" data-label="Screenshot to zoom into (16:9)"></div></div>
+          <div class="zoom-cursor" aria-hidden="true"><svg viewBox="0 0 24 32" width="26" height="34"><path d="M1 1 L1 27 L8 20 L13 31 L18 29 L13 18 L23 18 Z" fill="#fff" stroke="#111" stroke-width="1.6" stroke-linejoin="round"/></svg></div>
+        </div>
+        <p class="zoom-caption"><span class="zoom-value">1.0×</span> Scroll to zoom — exactly how your viewers will see it.</p>
+      </div>
+    </section>
+
+    <!-- LAYOUTS (sticky scroll) -->
+    <section class="layouts" id="layouts" data-steps>
+      <div class="layouts-sticky">
+        <div class="layouts-copy">
+          <p class="eyebrow">Camera layouts</p>
+          <h2>Your camera, your screen, or both.</h2>
+          <p class="lead">Screen and camera are recorded as separate tracks, so you can change the layout after recording — even per clip.</p>
+          <ol class="steps">
+            <li class="is-active"><strong>Fullscreen camera</strong><span>Introduce the idea face to face.</span></li>
+            <li><strong>Split screen</strong><span>Side by side, with an adjustable camera share.</span></li>
+            <li><strong>Camera overlay</strong><span>Circle, squircle, rounded, wide or portrait — with border, shadow and mirror.</span></li>
+            <li><strong>Screen only</strong><span>Give the screen all the room it needs.</span></li>
+            <li><strong>Camera cutout</strong><span>Your background removed on-device. Step onto the stage.</span></li>
+          </ol>
+          <div class="steps-progress" aria-hidden="true"><i></i></div>
+        </div>
+        <div class="layouts-media">
+          <div class="frame stacked">
+            <div class="slot slot-16x9 step-media is-active" data-src="assets/layout-camera.mp4" data-label="Fullscreen camera"></div>
+            <div class="slot slot-16x9 step-media" data-src="assets/layout-split.mp4" data-label="Split screen"></div>
+            <div class="slot slot-16x9 step-media" data-src="assets/layout-overlay.mp4" data-label="Camera overlay"></div>
+            <div class="slot slot-16x9 step-media" data-src="assets/layout-screen.mp4" data-label="Screen only"></div>
+            <div class="slot slot-16x9 step-media" data-src="assets/layout-cutout.mp4" data-label="Camera cutout"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MOTION -->
+    <section class="section" id="motion">
+      <div class="section-head">
+        <p class="eyebrow reveal">Motion</p>
+        <h2 class="reveal" style="--d: 1">Movement that feels filmed, not captured.</h2>
+        <p class="lead reveal" style="--d: 2">Shaky cursor paths become a steady glide. Fast camera moves pick up a natural blur. Clicks ripple. All of it is editable after you record.</p>
+      </div>
+      <div class="bento">
+        <article class="card card-wide reveal"><div class="slot slot-16x9" data-src="assets/motion-cursor.mp4" data-label="Smooth cursor clip"></div><div class="card-copy"><h3>Smooth cursor</h3><p>A deterministic spring smooths the recorded pointer. Preview and export always match.</p></div></article>
+        <article class="card reveal" style="--d: 1"><div class="cursor-grid" aria-label="Cursor styles">
+          <span><svg viewBox="-14 -14 36 36"><path d="M-6 -9 L-6 10 L-1 5 L3 13 L6 11.5 L2.5 4 L9 4 Z" fill="#fff" stroke="#111" stroke-width="1.4"/></svg>Arrow</span>
+          <span><svg viewBox="-14 -14 36 36"><path d="M-6 -9 L-6 10 L-1 5 L3 13 L6 11.5 L2.5 4 L9 4 Z" fill="#111" stroke="#fff" stroke-width="1.4"/></svg>Dark</span>
+          <span><svg viewBox="-14 -14 36 36"><path d="M-3 12 L-6 5 Q-7 2 -4.5 2 L-2 4.5 L-2 -6 Q-2 -8.5 0.5 -8 L1 0 L5 0 Q9.5 0 9.5 4 L8 12 Z" fill="#fff" stroke="#111" stroke-width="1.4"/></svg>Hand</span>
+          <span><svg viewBox="-14 -14 36 36"><path d="M-4 -9 H4 M0 -9 V9 M-4 9 H4" stroke="#fff" stroke-width="2"/></svg>I-beam</span>
+          <span><svg viewBox="-14 -14 36 36"><circle r="5" fill="#fff" stroke="#111" stroke-width="1.4"/></svg>Dot</span>
+          <span><svg viewBox="-14 -14 36 36"><circle r="9" fill="none" stroke="#fff" stroke-width="2.2"/><circle r="1.8" fill="#fff"/></svg>Ring</span>
+          <span><svg viewBox="-14 -14 36 36"><circle r="11" fill="#ffffff60" stroke="#fff" stroke-width="1.5"/></svg>Touch</span>
+          <span><svg viewBox="-14 -14 36 36"><path d="M-10 0 H-3 M3 0 H10 M0 -10 V-3 M0 3 V10" stroke="#fff" stroke-width="2"/></svg>Cross</span>
+        </div><div class="card-copy"><h3>Eight cursor styles</h3><p>Change size and style after recording. Add a halo or a click bounce.</p></div></article>
+        <article class="card reveal"><div class="keys-demo" aria-hidden="true"><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>S</kbd></div><div class="card-copy"><h3>Keystrokes on screen</h3><p>Shortcuts and typing appear as clean keycaps — only when you turn it on.</p></div></article>
+        <article class="card reveal" style="--d: 1"><div class="ripple-demo" aria-hidden="true"><i></i><i></i><i></i></div><div class="card-copy"><h3>Click effects</h3><p>A quiet ripple makes every click easy to follow.</p></div></article>
+        <article class="card reveal" style="--d: 2"><div class="slot slot-4x3" data-src="assets/motion-blur.png" data-label="Motion blur screenshot"></div><div class="card-copy"><h3>Motion blur</h3><p>Zooms and pans blur like a real camera move.</p></div></article>
+      </div>
+    </section>
+
+    <!-- ASPECT RATIOS (sticky morph) -->
+    <section class="ratios" data-ratios aria-label="Aspect ratios">
+      <div class="ratios-sticky">
+        <div class="section-head">
+          <p class="eyebrow">Any aspect ratio</p>
+          <h2>Record once. Post everywhere.</h2>
+          <p class="lead">One take becomes the wide demo, the square post and the vertical reel. Fill &amp; follow keeps the cursor in frame.</p>
+        </div>
+        <div class="ratio-stage"><div class="ratio-frame"><div class="slot slot-fill" data-src="assets/ratio.mp4" data-label="Aspect ratio clip (cropped live)"></div></div></div>
+        <div class="ratio-labels" aria-hidden="true"><span class="is-active">Wide · 16:9</span><span>Square · 1:1</span><span>Vertical · 9:16</span></div>
+      </div>
+    </section>
+
+    <!-- EDITING / RECORDING GRID -->
+    <section class="section" id="editing">
+      <div class="section-head">
+        <p class="eyebrow reveal">Record &amp; edit</p>
+        <h2 class="reveal" style="--d: 1">Everything a great demo needs.</h2>
+      </div>
+      <div class="feature-grid">
+        <div class="feature reveal"><span class="icon">◎</span><h3>60 fps native capture</h3><p>A whole display, one window, or a 9:16 region. The OS cursor is excluded and re-drawn as a vector.</p></div>
+        <div class="feature reveal" style="--d: 1"><span class="icon">◉</span><h3>Camera, mic &amp; system audio</h3><p>Live preview with an input meter before you start. Missing devices never block a take.</p></div>
+        <div class="feature reveal" style="--d: 2"><span class="icon">✂</span><h3>Real cuts</h3><p>Split, trim, ripple delete and reorder on a thumbnail timeline with snapping and undo.</p></div>
+        <div class="feature reveal"><span class="icon">◐</span><h3>Per-clip looks</h3><p>Give one clip its own layout, background, cursor or volume. The rest stays untouched.</p></div>
+        <div class="feature reveal" style="--d: 1"><span class="icon">▦</span><h3>Backgrounds</h3><p>Studio gradients, solid colors or your own wallpaper, with padding, radius and shadow.</p></div>
+        <div class="feature reveal" style="--d: 2"><span class="icon">⌁</span><h3>Projects</h3><p>Save and reopen a project. Your original recording files are never modified.</p></div>
+      </div>
+      <div class="frame wide-shot reveal"><div class="slot slot-21x9" data-src="assets/editor-screenshot.png" data-label="Editor screenshot (wide)"></div></div>
+    </section>
+
+    <!-- EXPORT -->
+    <section class="section export" id="export">
+      <div class="export-grid">
+        <div>
+          <p class="eyebrow reveal">Export</p>
+          <h2 class="reveal" style="--d: 1">Fast. Really fast.</h2>
+          <p class="lead reveal" style="--d: 2">Frames are decoded in order with hardware WebCodecs and encoded on your GPU with NVENC, Quick Sync or AMF — falling back to x264 when needed.</p>
+          <ul class="checks reveal" style="--d: 3">
+            <li>MP4 at 720p, 1080p or 4K · 24, 30 or 60 fps</li>
+            <li>GIF with an optimized palette</li>
+            <li>Copy straight to the clipboard</li>
+            <li>Everything renders on your device</li>
+          </ul>
+        </div>
+        <div class="stats">
+          <div class="stat reveal"><strong data-count="4" data-suffix="K">0</strong><span>maximum resolution</span></div>
+          <div class="stat reveal" style="--d: 1"><strong data-count="60" data-suffix=" fps">0</strong><span>smooth playback</span></div>
+          <div class="stat reveal" style="--d: 2"><strong data-count="3">0</strong><span>GPU encoder families</span></div>
+          <div class="stat reveal" style="--d: 3"><strong data-count="0" data-prefix="$">0</strong><span>forever</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- OPEN SOURCE -->
+    <section class="section open-source" id="open-source">
+      <div class="os-card reveal">
+        <div class="os-copy">
+          <p class="eyebrow">Open source</p>
+          <h2>Yours to read, change and share.</h2>
+          <p class="lead">Recorder Studio is MIT licensed and built in the open with Electron, React and FFmpeg. No telemetry, no account, no watermark — your recordings never leave your computer.</p>
+          <div class="os-badges"><span>MIT License</span><span>No telemetry</span><span>No watermark</span><span>Offline</span></div>
+          <div class="hero-cta left"><a class="button button-primary" data-link="github" href="#" target="_blank" rel="noopener">Star on GitHub</a><a class="button button-ghost" data-link="issues" href="#" target="_blank" rel="noopener">Report an issue</a></div>
+        </div>
+        <div class="terminal" aria-label="Build from source">
+          <div class="terminal-bar"><i></i><i></i><i></i><span>PowerShell</span></div>
+<pre><code><span class="c"># Build from source</span>
+<span class="p">&gt;</span> git clone <span data-text="repo">https://github.com/you/recorder-studio</span>
+<span class="p">&gt;</span> cd recorder-studio
+<span class="p">&gt;</span> npm ci
+<span class="p">&gt;</span> npm run setup:win
+<span class="p">&gt;</span> npm run dev
+<span class="ok">✓ Recorder Studio is running</span></code></pre>
+          <button class="copy" data-copy type="button">Copy</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- DOWNLOAD -->
+    <section class="section download" id="download">
+      <div class="download-glow" aria-hidden="true"></div>
+      <p class="eyebrow reveal">Download</p>
+      <h2 class="reveal" style="--d: 1">Start recording in a minute.</h2>
+      <p class="lead reveal" style="--d: 2">Free for everyone. Pick the installer or the portable app.</p>
+      <div class="download-grid">
+        <a class="download-card reveal" data-link="installer" href="#"><span class="dl-icon">⬇</span><strong>Windows installer</strong><span>Recorder-Studio-Setup-<b data-text="version-number">0.4.0</b>-x64.exe</span><em>Recommended</em></a>
+        <a class="download-card reveal" style="--d: 1" data-link="portable" href="#"><span class="dl-icon">▣</span><strong>Portable</strong><span>Recorder-Studio-Portable-<b data-text="version-number">0.4.0</b>-x64.exe</span><em>No install</em></a>
+        <a class="download-card reveal" style="--d: 2" data-link="github" href="#" target="_blank" rel="noopener"><span class="dl-icon">{ }</span><strong>Source code</strong><span>Build it yourself</span><em>MIT</em></a>
+      </div>
+      <p class="fine reveal">The installer is not code-signed yet, so Windows SmartScreen may ask you to confirm. Checksums are in <a data-link="checksums" href="#">SHA256SUMS.txt</a>.</p>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div><a class="brand" href="#top"><img class="brand-logo" src="assets/favicon.svg" alt="" width="28" height="28">Recorder Studio</a><p>Free, open-source screen recording for Windows.</p></div>
+    <nav aria-label="Footer"><a data-link="github" href="#" target="_blank" rel="noopener">GitHub</a><a data-link="releases" href="#" target="_blank" rel="noopener">Releases</a><a data-link="license" href="#" target="_blank" rel="noopener">License</a><a href="#download">Download</a></nav>
+    <p class="fine">App code MIT · bundled FFmpeg GPLv3 · © <span data-year></span> Recorder Studio contributors</p>
+  </footer>
+</body>
+</html>
