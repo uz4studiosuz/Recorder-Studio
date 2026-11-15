@@ -4,6 +4,8 @@ Static site — no build step. Open `index.html` or host the folder on GitHub Pa
 
 ## Your media
 
+The current clips and screenshots were rendered with Recorder Studio's own compositor (the same code as preview and export) from a scripted demo recording, so they show real app output. Replace any of them with your own recordings by keeping the same file names.
+
 Drop files into `assets/` with these names. Until a file exists, its slot shows a labelled placeholder with the expected path.
 
 | File | Where | Suggested |

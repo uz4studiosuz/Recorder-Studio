@@ -30,7 +30,11 @@
         const mb = bytes => `${Math.round(bytes / 1048576)} MB`;
         if (assets.installer) set('size', `Installer ${mb(assets.installer.size)}${assets.portable ? ` · portable ${mb(assets.portable.size)}` : ''}`);
       })
-      .catch(() => { /* keep the stable releases/latest/download links from site.config.js */ });
+      .catch(error => {
+        // No published release yet (404): send downloads to the releases page instead of a dead file link.
+        if (String(error?.message) !== '404') return;
+        for (const a of document.querySelectorAll('[data-link="installer"], [data-link="portable"]')) { a.href = site.links.releases; a.removeAttribute('download'); a.target = '_blank'; a.rel = 'noopener'; }
+      });
   }
   document.querySelectorAll('[data-year]').forEach(n => { n.textContent = new Date().getFullYear(); });
 
