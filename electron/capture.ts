@@ -6,7 +6,7 @@ import { createRequire } from 'node:module';
 import type { ChildProcessWithoutNullStreams } from 'node:child_process';
 import type { CaptureResult, CaptureTarget, CaptureOptions } from '../shared/api.js';
 import type { TelemetryEvent } from '../shared/project.js';
-import { checkFFmpeg, completion, launch, runFFmpeg, mediaDuration } from './ffmpeg.js';
+import { checkFFmpeg, completion, launch, runFFmpeg, mediaDuration, hardwareEncoder, fastVideoArgs, videoSize, type Encoder } from './ffmpeg.js';
 import { withTimeout } from '../shared/async.js';
 import { registerMedia, sessionFolder } from './media.js';
 
@@ -46,6 +46,7 @@ function windowBounds(id: string): Recording['bounds'] {
 }
 export async function targets(): Promise<CaptureTarget[]> {
   await checkFFmpeg();
+  void hardwareEncoder(); // Warm the GPU encoder probe while the user picks a source.
   targetCache = new Map();
   if (process.platform === 'win32') {
     const sources = await desktopCapturer.getSources({ types: ['screen', 'window'], thumbnailSize: { width: 480, height: 270 } });
@@ -107,7 +108,8 @@ export async function startCapture(id: string, onStop: () => void, options?: Cap
     hook = (require('uiohook-napi') as typeof import('uiohook-napi')).uIOhook;
     const folder = await sessionFolder();
     log = createWriteStream(path.join(folder, 'telemetry.json')); log.write('[');
-    child = launch([...target.input, '-vf', cropFilter + 'pad=ceil(iw/2)*2:ceil(ih/2)*2', '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '18', '-g', '60', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', path.join(folder, 'raw.mp4')]);
+    // No +faststart: rewriting the whole file at Stop only delays opening the editor; local range reads find moov at the end.
+    child = launch([...target.input, '-vf', cropFilter + 'pad=ceil(iw/2)*2:ceil(ih/2)*2', ...fastVideoArgs(await hardwareEncoder(), 60), path.join(folder, 'raw.mp4')]);
     const done = completion(child); void done.catch(() => {});
     lastFolder = folder;
     const state: Recording = { folder, process: child, done, origin: Infinity, hook, log, first: true, count: 0, bounds: target.bounds, tracks: new Map(), handlers: [], stopping: false, stage: 'Recording', abort: new AbortController() };
@@ -226,15 +228,30 @@ export async function stopCapture(): Promise<CaptureResult> {
     const screenTask = (async () => {
       if (state.tracks.has('audio')) {
         const offset = JSON.parse(await fs.readFile(path.join(state.folder, 'audio-offset.json'), 'utf8')).offset as number;
-        await runFFmpeg(['-i', raw, '-itsoffset', String(offset), '-i', path.join(state.folder, 'audio.webm'), '-map', '0:v', '-map', '1:a', '-c:v', 'copy', '-c:a', 'aac', '-af', 'apad', '-t', String(duration), '-movflags', '+faststart', result], options(0));
-      } else await fs.copyFile(raw, result);
+        // adelay writes real leading silence, so the audio track starts at 0 like the screen and webcam.
+        // (-itsoffset only shifted timestamps; filters that reset PTS then moved speech earlier than the picture.)
+        await runFFmpeg(['-i', raw, '-i', path.join(state.folder, 'audio.webm'), '-map', '0:v', '-map', '1:a', '-c:v', 'copy', '-c:a', 'aac', '-af', `adelay=${Math.max(0, Math.round(offset * 1000))}:all=1,apad`, '-t', String(duration), result], options(0));
+      } else await fs.rename(raw, result); // Same bytes; avoid copying a multi-gigabyte file.
       progress[0] = 1;
     })();
     const cameraTask = (async () => {
       if (!state.tracks.has('webcam')) return undefined;
       const offset = JSON.parse(await fs.readFile(path.join(state.folder, 'webcam-offset.json'), 'utf8')).offset as number;
       const webcamFile = path.join(state.folder, 'webcam.mp4');
-      await runFFmpeg(['-i', path.join(state.folder, 'webcam.webm'), '-vf', `tpad=start_duration=${offset}:start_mode=clone:stop_duration=${duration}:stop_mode=clone`, '-t', String(duration), '-an', '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '18', '-g', '30', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', webcamFile], options(1));
+      const webcamSource = path.join(state.folder, 'webcam.webm');
+      // Cameras can switch resolution mid-recording (warm-up, auto exposure); GPU encoders cannot
+      // reinitialize, so pin the first frame size and a constant 30fps before encoding.
+      const size = await videoSize(webcamSource).catch(() => ({ width: 1280, height: 720 }));
+      const filter = `scale=${size.width}:${size.height}:force_original_aspect_ratio=decrease,pad=${size.width}:${size.height}:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30,tpad=start_duration=${offset}:start_mode=clone:stop_duration=${duration}:stop_mode=clone`;
+      const encode = (encoder: Encoder) => runFFmpeg(['-i', webcamSource, '-vf', filter, '-t', String(duration), '-an', ...fastVideoArgs(encoder, 30), webcamFile], options(1));
+      const encoder = await hardwareEncoder();
+      try { await encode(encoder); }
+      catch (error) {
+        if (encoder === 'libx264' || state.abort.signal.aborted) throw error;
+        // A GPU encoder that passed the startup probe can still reject this stream; CPU always works.
+        await fs.writeFile(path.join(state.folder, 'webcam-gpu-error.log'), String(error)).catch(() => {});
+        await encode('libx264');
+      }
       progress[1] = 1; return registerMedia(webcamFile);
     })();
     const finalized = await Promise.allSettled([screenTask, cameraTask]);
@@ -244,7 +261,7 @@ export async function stopCapture(): Promise<CaptureResult> {
     state.stage = 'Opening editor'; state.progress = 1;
     return { media: await registerMedia(result), telemetry: JSON.parse(await fs.readFile(path.join(state.folder, 'telemetry.json'), 'utf8')), webcam, folder: state.folder };
   } catch (error) { if (recording === state && !state.abort.signal.aborted) lastError = String(error); throw error; }
-  finally { if (recording === state) recording = null; if (!recording) BrowserWindow.getAllWindows()[0]?.restore(); }
+  finally { if (recording === state) recording = null; }
 }
 export async function cancelCapture() {
   const state = recording; if (!state) return;

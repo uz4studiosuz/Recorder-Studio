@@ -17,6 +17,8 @@ export interface EditSettings {
   clips?: VideoClip[];
 }
 export interface SavedProject { version: 1; media: MediaAsset; webcam?: MediaAsset; telemetry: TelemetryEvent[]; settings: EditSettings }
+/** A finished launcher recording handed to the studio editor. */
+export interface StudioHandoff extends CaptureResult { layout: 'screen' | 'camera' | 'split' | 'overlay' | 'cutout'; aspectRatio: '16:9' | '9:16'; fitMode: 'fit' | 'follow' }
 export interface LibraryEntry { id: string; name: string; updatedAt: number; duration: number; thumbnail?: string }
 export interface RecorderAPI {
   getAppInfo(): Promise<{ version: string; platform: string }>;
@@ -50,8 +52,22 @@ export interface RecorderAPI {
   /** Byte access for WebCodecs demuxing of opened media. */
   mediaSize(mediaId: string): Promise<number>;
   readMedia(mediaId: string, offset: number, length: number): Promise<ArrayBuffer>;
-  startExport(input: { mediaId: string; format: 'mp4' | 'gif'; width: number; height: number; fps: number; crf?: number; encoder?: 'auto' | 'cpu'; destination?: 'file' | 'clipboard'; settings: EditSettings; telemetry: TelemetryEvent[] }): Promise<{ id: string; encoder: string } | null>;
+  /** `video: 'h264'` streams Annex-B H.264 from the renderer's WebCodecs encoder; 'raw' sends RGBA frames. */
+  startExport(input: { mediaId: string; format: 'mp4' | 'gif'; width: number; height: number; fps: number; crf?: number; encoder?: 'auto' | 'cpu'; video?: 'raw' | 'h264'; destination?: 'file' | 'clipboard'; settings: EditSettings; telemetry: TelemetryEvent[] }): Promise<{ id: string; encoder: string } | null>;
   exportFrame(id: string, data: ArrayBuffer): Promise<void>;
+  /** Appends encoded H.264 bytes for a `video: 'h264'` export. */
+  exportChunk(id: string, data: ArrayBuffer): Promise<void>;
   finishExport(id: string): Promise<string>;
   cancelExport(id: string): Promise<void>;
+  /** Opens (or focuses) the studio window, optionally loading a launcher recording into the editor. */
+  openStudio(handoff?: StudioHandoff): Promise<void>;
+  /** Shows the compact launcher bar. */
+  showLauncher(): Promise<void>;
+  minimizeLauncher(): Promise<void>;
+  /** Shows a centered 3-2-1 overlay and resolves when it finishes. */
+  countdown(seconds: number): Promise<void>;
+  onStudioHandoff(callback: (handoff: StudioHandoff) => void): () => void;
+  /** Returns a recording handed over before the studio finished loading. */
+  takeStudioHandoff(): Promise<StudioHandoff | null>;
+  resizeLauncher(width: number, height: number): Promise<void>;
 }

@@ -68,7 +68,7 @@ export function Preview({ onImport, onError }: { onImport: () => void; onError: 
         }
         sounds.update(v.currentTime, s.playing && s.clickSounds);
         const cam = webcamVideo.current;
-        if (cam && cam.readyState >= 1) { if (Math.abs(cam.currentTime - v.currentTime) > 0.15) cam.currentTime = Math.min(v.currentTime, Math.max(0, cam.duration - 0.001)); cam.playbackRate = s.speed; if (s.playing && cam.paused) void cam.play().catch(() => {}); }
+        if (cam && cam.readyState >= 1) { if (Math.abs(cam.currentTime - v.currentTime) > 0.08) cam.currentTime = Math.min(v.currentTime, Math.max(0, cam.duration - 0.001)); cam.playbackRate = s.speed; if (s.playing && cam.paused) void cam.play().catch(() => {}); }
         // Clip looks live in s.clips, so it is part of the signature: edits show while paused.
         const signature = [v.currentTime, s.canvas, s.cursor, s.zooms, s.clips, s.webcamShape, s.webcamSize, s.webcamPosition, s.webcamDodge, s.webcamRoundness, s.webcamBorder, s.webcamShadow, s.webcamMirror, cam?.currentTime, s.selection, s.selectedZoom, compositionRevision(), decodeRevision.current];
         if (signature.some((value, index) => value !== previous[index])) {

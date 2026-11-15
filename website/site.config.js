@@ -1,15 +1,15 @@
-// Edit these values for your release. Links marked "#" stay inert until set.
+// Site settings. Download buttons resolve the newest GitHub release at runtime;
+// these stable "latest/download" links are the fallback when the API is unavailable.
 window.SITE = {
-  version: '0.4.0',
-  repo: 'https://github.com/you/recorder-studio',
+  version: '0.6.0',
+  owner: 'uz4studiosuz',
+  repo: 'Recorder-Studio',
   links: {
-    github: 'https://github.com/you/recorder-studio',
-    issues: 'https://github.com/you/recorder-studio/issues',
-    releases: 'https://github.com/you/recorder-studio/releases',
-    license: 'https://github.com/you/recorder-studio/blob/main/LICENSE',
-    // Put the .exe files in website/downloads/ or point these at GitHub release assets.
-    installer: 'downloads/Recorder-Studio-Setup-0.4.0-x64.exe',
-    portable: 'downloads/Recorder-Studio-Portable-0.4.0-x64.exe',
-    checksums: 'downloads/SHA256SUMS.txt',
+    github: 'https://github.com/uz4studiosuz/Recorder-Studio',
+    issues: 'https://github.com/uz4studiosuz/Recorder-Studio/issues',
+    releases: 'https://github.com/uz4studiosuz/Recorder-Studio/releases',
+    license: 'https://github.com/uz4studiosuz/Recorder-Studio/blob/main/LICENSE',
+    installer: 'https://github.com/uz4studiosuz/Recorder-Studio/releases/latest/download/Recorder-Studio-Setup-x64.exe',
+    portable: 'https://github.com/uz4studiosuz/Recorder-Studio/releases/latest/download/Recorder-Studio-Portable-x64.exe',
   },
 };

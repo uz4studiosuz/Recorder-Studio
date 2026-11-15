@@ -3,7 +3,7 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import type { CanvasSettings, CursorSettings, ZoomSegment, TelemetryEvent, VideoClip, ClipLook } from '../../shared/project';
 import type { EditSettings, MediaAsset, SavedProject } from '../../shared/api';
 import { autoZoom } from '../engine/motion';
-import { outputDuration, sourceAtOutput, timelineRanges, applyLook } from '../../shared/timeline';
+import { outputDuration, outputAtSource, sourceAtOutput, timelineRanges, applyLook } from '../../shared/timeline';
 
 export interface MediaSource { id?: string; name: string; url: string; duration: number }
 interface EditorState {
@@ -146,10 +146,16 @@ export const useEditor = create<EditorState>()(persist<EditorState, [], [], Pick
     const previous = get().source; if (previous?.url.startsWith('blob:') && previous.url !== source?.url) URL.revokeObjectURL(previous.url);
     set({ source, currentTime: 0, playing: false, zooms: [], telemetry: [], webcam: null, trimStart: 0, trimEnd: source?.duration ?? 0, speed: 1, selectedZoom: null, selectedClip: null, selection: null, splitPoints: [], clips: source?.duration ? [clip(0, source.duration)] : [], clipsInitialized: !!source?.duration, autoZoomPending: false, past: [], future: [], timelineZoom: 1 });
   },
-  setDuration: duration => set(state => ({ source: state.source ? { ...state.source, duration } : null, clips: state.clipsInitialized ? state.clips.map(c => ({ ...c, end: Math.min(c.end, duration) })).filter(c => c.end > c.start) : [clip(0, duration)], clipsInitialized: true, trimEnd: state.trimEnd > 0 ? Math.min(state.trimEnd, duration) : duration, zooms: state.autoZoomPending ? autoZoom(state.telemetry, duration) : state.zooms, autoZoomPending: false })),
+  setDuration: duration => set(state => ({ source: state.source ? { ...state.source, duration } : null, clips: state.clipsInitialized ? state.clips.map(c => ({ ...c, end: Math.min(c.end, duration) })).filter(c => c.end > c.start) : [clip(0, duration)], clipsInitialized: true, trimEnd: state.trimEnd > 0 ? Math.min(state.trimEnd, duration) : duration,zooms: state.autoZoomPending ? autoZoom(state.telemetry, duration) : state.zooms, autoZoomPending: false })),
   seek: time => set(s => ({ seekRevision: s.seekRevision + 1, currentTime: Math.max(0, Math.min(Number.isFinite(time) ? time : 0, s.source?.duration ?? 0)) })),
   seekOutput: time => set(s => ({ seekRevision: s.seekRevision + 1, currentTime: sourceAtOutput(s, Math.max(0, Math.min(outputDuration(s), time))) })),
-  setPlaying: playing => set({ playing: !!get().source && timelineRanges(get()).length > 0 && playing }),
+  setPlaying: playing => {
+    const s = get(), allowed = !!s.source && timelineRanges(s).length > 0 && playing;
+    // Play at the end of the timeline starts again from the beginning, like a media player.
+    const total = allowed ? outputDuration(s) : 0;
+    if (allowed && total > 0 && outputAtSource(s, s.currentTime) >= total - 0.05) set({ playing: true, seekRevision: s.seekRevision + 1, currentTime: sourceAtOutput(s, 0) });
+    else set({ playing: allowed });
+  },
   resetAppearance: () => set({ canvas: { ...defaultCanvas }, cursor: { ...defaultCursor } }),
 }), {
   name: 'recorder-studio-preferences', version: 1, storage: createJSONStorage(() => localStorage), partialize: state => ({ canvas: { ...state.canvas, backgroundImage: undefined, backgroundType: state.canvas.backgroundType === 'image' ? 'gradient' : state.canvas.backgroundType }, cursor: state.cursor, panels: state.panels }),

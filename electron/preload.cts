@@ -32,7 +32,15 @@ const api: RecorderAPI = {
   readMedia: (id, offset, length) => ipcRenderer.invoke('media:read', id, offset, length),
   startExport: input => ipcRenderer.invoke('export:start', input),
   exportFrame: (id, data) => ipcRenderer.invoke('export:frame', id, data),
+  exportChunk: (id, data) => ipcRenderer.invoke('export:chunk', id, data),
   finishExport: id => ipcRenderer.invoke('export:finish', id),
   cancelExport: id => ipcRenderer.invoke('export:cancel', id),
+  openStudio: handoff => ipcRenderer.invoke('launcher:open-studio', handoff),
+  showLauncher: () => ipcRenderer.invoke('launcher:show'),
+  takeStudioHandoff: () => ipcRenderer.invoke('studio:take-handoff'),
+  resizeLauncher: (width, height) => ipcRenderer.invoke('launcher:resize', width, height),
+  minimizeLauncher: () => ipcRenderer.invoke('launcher:minimize'),
+  countdown: seconds => ipcRenderer.invoke('capture:countdown', seconds),
+  onStudioHandoff: callback => { const listener = (_event: Electron.IpcRendererEvent, handoff: Parameters<typeof callback>[0]) => callback(handoff); ipcRenderer.on('studio:handoff', listener); return () => ipcRenderer.removeListener('studio:handoff', listener); },
 };
 contextBridge.exposeInMainWorld('recorder', Object.freeze(api));

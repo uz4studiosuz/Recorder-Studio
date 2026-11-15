@@ -3,6 +3,7 @@ const { app } = require('electron');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 delete process.env.RECORDER_DEV_URL;
+process.env.RECORDER_START_VIEW = 'studio';
 app.setPath('userData', path.resolve('.runtime-test'));
 const timeout = setTimeout(() => { console.error('Desktop smoke test timed out'); app.exit(1); }, 20000);
 app.on('browser-window-created', (_event, window) => {

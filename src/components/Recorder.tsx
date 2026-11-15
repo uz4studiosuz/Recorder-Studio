@@ -103,6 +103,9 @@ export function Recorder({ close, notify, onComplete }: { close: () => void; not
   const startNative = async () => {
     if (!prepared.current) return; setStatus('starting'); setError(''); requestedStop.current = false; operation.current++;
     try {
+      // Same countdown preference as the launcher bar (0, 3 or 5 seconds).
+      const countdown = (() => { try { return Number(JSON.parse(localStorage.getItem('recorder-launcher-countdown') ?? '3')) || 0; } catch { return 3; } })();
+      if (countdown > 0) await window.recorder!.countdown(countdown);
       await window.recorder!.startCapture(target, { ...(mode === 'crop' ? { region } : {}), keystrokes });
       session.current = await prepared.current.start(); setStatus('recording');
       if (requestedStop.current) void stopRef.current();

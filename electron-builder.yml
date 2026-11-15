@@ -25,7 +25,7 @@ win:
     - nsis
     - portable
 nsis:
-  artifactName: Recorder-Studio-Setup-${version}-${arch}.${ext}
+  artifactName: Recorder-Studio-Setup-${arch}.${ext}
   oneClick: false
   perMachine: false
   allowToChangeInstallationDirectory: true
@@ -35,7 +35,7 @@ nsis:
   uninstallerIcon: build/icon.ico
   installerHeaderIcon: build/icon.ico
 portable:
-  artifactName: Recorder-Studio-Portable-${version}-${arch}.${ext}
+  artifactName: Recorder-Studio-Portable-${arch}.${ext}
 mac:
   icon: build/icon.png
   category: public.app-category.video

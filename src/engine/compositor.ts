@@ -65,6 +65,9 @@ export function createCompositor(events: TelemetryEvent[], smoothing: number) {
   let backgroundKey = '';
   return function draw(canvas: HTMLCanvasElement, video: FrameSource, webcam: FrameSource | null, time: number, projectSettings: EditSettings, interaction?: { hoverAvoid: number }) {
     const settings = settingsAt(projectSettings, time);
+    // Reels already frame the cursor closely; click zooms are kept but only applied in landscape,
+    // so switching back to 16:9 brings them back.
+    const zooms = settings.canvas.aspectRatio === '9:16' ? [] : settings.zooms;
     const context = canvas.getContext('2d', { alpha: false })!;
     const w = canvas.width, h = canvas.height, u = w / 1920, unit = Math.min(w, h) / 1080;
     const photo = backgroundImage(settings.canvas);
@@ -94,12 +97,12 @@ export function createCompositor(events: TelemetryEvent[], smoothing: number) {
     const splitAreas = splitFrames(w, h, settings.canvas);
     const area = split ? splitAreas.screen : { x: 0, y: 0, width: w, height: h };
     const frameCanvas = (width: number) => ({ ...settings.canvas, padding: gap * 1920 / width });
-    const local = frameGeometry(area.width, area.height, sourceWidth, sourceHeight, split ? { ...settings.canvas, padding: 0, fitMode: 'fill' } : frameCanvas(area.width), follow(time));
+    const local = frameGeometry(area.width, area.height, sourceWidth, sourceHeight, split ? { ...settings.canvas, padding: 0, fitMode: settings.canvas.fitMode === 'fill' ? 'fill' : 'follow' } : frameCanvas(area.width), follow(time));
     const geometry = { frame: { ...local.frame, x: local.frame.x + area.x, y: local.frame.y + area.y }, crop: local.crop };
     const { frame, crop } = geometry;
     const { width: fw, height: fh, x: fx, y: fy } = frame;
     const mapCamera = (sampleTime: number) => {
-      const camera = cameraAt(settings.zooms, sampleTime);
+      const camera = cameraAt(zooms, sampleTime);
       return { ...camera, x: clamp((camera.x - crop.x) / crop.width, 0.5 / camera.scale, 1 - 0.5 / camera.scale), y: clamp((camera.y - crop.y) / crop.height, 0.5 / camera.scale, 1 - 0.5 / camera.scale) };
     };
     const drawVideo = () => context.drawImage(video, crop.x * sourceWidth, crop.y * sourceHeight, crop.width * sourceWidth, crop.height * sourceHeight, 0, 0, fw, fh);
@@ -157,7 +160,7 @@ export function createCompositor(events: TelemetryEvent[], smoothing: number) {
           const t = Math.max(0, time - index / 45), p = pointer(t), weight = Math.exp(-index / 5); total += weight;
           if (!p || p.x < 0 || p.x > 1 || p.y < 0 || p.y > 1) continue;
           const g = frameGeometry(w, h, sourceWidth, sourceHeight, frameCanvas(w), follow(t));
-          const cam = cameraAt(settings.zooms, t), cx = clamp((cam.x - g.crop.x) / g.crop.width, 0.5 / cam.scale, 1 - 0.5 / cam.scale), cy = clamp((cam.y - g.crop.y) / g.crop.height, 0.5 / cam.scale, 1 - 0.5 / cam.scale);
+          const cam = cameraAt(zooms, t), cx = clamp((cam.x - g.crop.x) / g.crop.width, 0.5 / cam.scale, 1 - 0.5 / cam.scale), cy = clamp((cam.y - g.crop.y) / g.crop.height, 0.5 / cam.scale, 1 - 0.5 / cam.scale);
           const px = g.frame.x + g.frame.width / 2 + ((p.x - g.crop.x) / g.crop.width - cx) * g.frame.width * cam.scale;
           const py = g.frame.y + g.frame.height / 2 + ((p.y - g.crop.y) / g.crop.height - cy) * g.frame.height * cam.scale;
           avoid += proximity(base, px, py) * weight;

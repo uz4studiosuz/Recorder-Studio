@@ -5,29 +5,15 @@ import { randomUUID } from 'node:crypto';
 import { promises as fs } from 'node:fs';
 import type { ChildProcessWithoutNullStreams } from 'node:child_process';
 import type { RecorderAPI } from '../shared/api.js';
-import { checkFFmpeg, completion, hasAudio, launch } from './ffmpeg.js';
+import { checkFFmpeg, completion, hasAudio, launch, hardwareEncoder, type Encoder } from './ffmpeg.js';
 import { mediaPath } from './media.js';
 import { dragGestures, chalkSample } from '../shared/pointer-audio.js';
 import { outputDuration, outputAtSource, timelineRanges, settingsAt } from '../shared/timeline.js';
 
-interface Job { id: string; child: ChildProcessWithoutNullStreams; done: Promise<void>; temporary: string; output: string; frames: number; expected: number; frameBytes: number; error?: Error; writing: boolean; copyToClipboard: boolean; clicksFile?: string; filterFile?: string }
+interface Job { id: string; child: ChildProcessWithoutNullStreams; done: Promise<void>; temporary: string; output: string; frames: number; expected: number; frameBytes: number; error?: Error; writing: boolean; stream: boolean; copyToClipboard: boolean; clicksFile?: string; filterFile?: string }
 let job: Job | null = null;
 let lastOutput: string | undefined;
 export async function revealExport() { if (lastOutput) shell.showItemInFolder(lastOutput); }
-type Encoder = 'h264_nvenc' | 'h264_qsv' | 'h264_amf' | 'libx264';
-let hardware: Promise<Encoder> | undefined;
-/** Finds a working GPU H.264 encoder once per session; falls back to x264. */
-function hardwareEncoder() {
-  hardware ??= (async () => {
-    for (const encoder of ['h264_nvenc', 'h264_qsv', 'h264_amf'] as const) {
-      const child = launch(['-f', 'lavfi', '-i', 'color=black:s=1280x720:d=0.2', '-frames:v', '3', '-vf', encoder === 'h264_qsv' ? 'format=nv12' : 'format=yuv420p', '-c:v', encoder, '-f', 'null', '-']);
-      const timer = setTimeout(() => child.kill(), 8000);
-      try { await completion(child); return encoder; } catch { /* try the next encoder */ } finally { clearTimeout(timer); }
-    }
-    return 'libx264' as const;
-  })();
-  return hardware;
-}
 function videoArgs(encoder: Encoder, crf: number, width: number) {
   const color = ['-color_primaries', 'bt709', '-color_trc', 'bt709', '-colorspace', 'bt709'];
   const filter = (format: string) => ['-vf', `scale=out_color_matrix=bt709:out_range=tv,format=${format}`];
@@ -55,16 +41,22 @@ export async function startExport(input: Parameters<RecorderAPI['startExport']>[
   const output = selected.filePath.toLowerCase().endsWith(`.${format}`) ? selected.filePath : `${selected.filePath}.${format}`;
   const id = randomUUID(); const temporary = `${output}.${id}.partial.${format}`;
   if (input.encoder !== undefined && !['auto', 'cpu'].includes(input.encoder)) throw new Error('Invalid encoder');
-  // Raw RGBA frames: no PNG encode in the renderer and no PNG decode in FFmpeg.
-  const args = ['-f', 'rawvideo', '-pix_fmt', 'rgba', '-s', `${width}x${height}`, '-framerate', String(fps), '-i', 'pipe:0'];
+  if (input.video !== undefined && !['raw', 'h264'].includes(input.video)) throw new Error('Invalid export video transport');
+  // WebCodecs path: the renderer encodes on the GPU and FFmpeg only muxes (video copy + audio).
+  // Raw path (GIF / fallback): RGBA frames, no PNG encode in the renderer and no PNG decode in FFmpeg.
+  const stream = format === 'mp4' && input.video === 'h264';
+  const args = stream ? ['-f', 'h264', '-framerate', String(fps), '-i', 'pipe:0'] : ['-f', 'rawvideo', '-pix_fmt', 'rgba', '-s', `${width}x${height}`, '-framerate', String(fps), '-i', 'pipe:0'];
   const audio = format === 'mp4' && await hasAudio(source);
   let graph = '';
   if (audio) {
     args.push('-i', source);
-    if (ranges.length > 1) graph = `[1:a]asplit=${ranges.length}${ranges.map((_, index) => `[input${index}]`).join('')};`;
+    // Fill any leading gap with silence first: older recordings and imported files can start audio after 0,
+    // and asetpts=PTS-STARTPTS below would otherwise pull speech ahead of the picture.
+    graph = '[1:a]aresample=async=1:first_pts=0[source];';
+    if (ranges.length > 1) graph += `[source]asplit=${ranges.length}${ranges.map((_, index) => `[input${index}]`).join('')};`;
     // Each clip keeps its own volume; the project volume is applied once below.
     const clipVolume = (start: number, end: number) => settingsAt({ ...settings, volume: 1 }, (start + end) / 2).volume;
-    graph += ranges.map((range, index) => `[${ranges.length > 1 ? `input${index}` : '1:a'}]atrim=start=${range.start}:end=${range.end},asetpts=PTS-STARTPTS,volume=${clipVolume(range.start, range.end)}[a${index}]`).join(';');
+    graph += ranges.map((range, index) => `[${ranges.length > 1 ? `input${index}` : 'source'}]atrim=start=${range.start}:end=${range.end},asetpts=PTS-STARTPTS,volume=${clipVolume(range.start, range.end)}[a${index}]`).join(';');
     graph += `;${ranges.map((_, index) => `[a${index}]`).join('')}concat=n=${ranges.length}:v=0:a=1,${tempo(settings.speed)},volume=${settings.volume}[base]`;
   }
   let clicksFile: string | undefined;
@@ -82,16 +74,18 @@ export async function startExport(input: Parameters<RecorderAPI['startExport']>[
   if (graph) { filterFile = `${temporary}.filters`; await fs.writeFile(filterFile, graph); args.push('-filter_complex_script', filterFile); }
   args.push('-map', '0:v:0');
   if (graph) args.push('-map', '[outaudio]', '-c:a', 'aac', '-b:a', '192k');
-  const encoder: Encoder = format === 'mp4' && input.encoder !== 'cpu' ? await hardwareEncoder() : 'libx264';
-  if (format === 'mp4') args.push(...videoArgs(encoder, input.crf ?? 18, width), '-movflags', '+faststart');
+  const encoder: Encoder = format === 'mp4' && input.encoder !== 'cpu' && !stream ? await hardwareEncoder() : 'libx264';
+  // Raw Annex-B has no timestamps; WebCodecs emits no B-frames, so frame N is presented at N/fps.
+  if (stream) args.push('-c:v', 'copy', '-bsf:v', `setts=pts=N/(${fps}*TB):dts=N/(${fps}*TB)`, '-movflags', '+faststart');
+  else if (format === 'mp4') args.push(...videoArgs(encoder, input.crf ?? 18, width), '-movflags', '+faststart');
   else args.push('-vf', 'split[a][b];[a]palettegen=stats_mode=diff[p];[b][p]paletteuse=dither=sierra2_4a', '-loop', '0');
   const expected = Math.ceil(duration * fps);
   args.push('-frames:v', String(expected), '-t', String(expected / fps), temporary);
   const child = launch(args); const done = completion(child);
-  const state: Job = { id, child, done, temporary, output, frames: 0, expected, frameBytes: width * height * 4, writing: false, copyToClipboard: input.destination === 'clipboard', clicksFile, filterFile };
+  const state: Job = { id, child, done, temporary, output, frames: 0, expected, frameBytes: width * height * 4, writing: false, stream, copyToClipboard: input.destination === 'clipboard', clicksFile, filterFile };
   void done.catch(error => { state.error = error; });
   child.stdin.on('error', error => { state.error = error; });
-  job = state; return { id, encoder: format === 'gif' ? 'gif' : encoder };
+  job = state; return { id, encoder: format === 'gif' ? 'gif' : stream ? 'webcodecs' : encoder };
 }
 function tempo(speed: number) {
   const values: number[] = [];
@@ -103,16 +97,24 @@ function active(id: string) { if (!job || job.id !== id) throw new Error('Export
 export async function exportFrame(id: string, data: ArrayBuffer) {
   const state = active(id);
   if (state.error) throw state.error;
-  if (state.writing || state.frames >= state.expected) throw new Error('Unexpected export frame');
+  if (state.stream || state.writing || state.frames >= state.expected) throw new Error('Unexpected export frame');
   if (data.byteLength !== state.frameBytes) throw new Error('Export frame has the wrong size');
   state.writing = true;
   try { await new Promise<void>((resolve, reject) => state.child.stdin.write(Buffer.from(data), error => error ? reject(error) : resolve())); state.frames++; }
   finally { state.writing = false; }
 }
+export async function exportChunk(id: string, data: ArrayBuffer) {
+  const state = active(id);
+  if (state.error) throw state.error;
+  if (!state.stream || state.writing) throw new Error('Unexpected export chunk');
+  state.writing = true;
+  try { await new Promise<void>((resolve, reject) => state.child.stdin.write(Buffer.from(data), error => error ? reject(error) : resolve())); }
+  finally { state.writing = false; }
+}
 export async function finishExport(id: string) {
   const state = active(id);
   try {
-    if (state.frames !== state.expected) throw new Error(`Missing frames: ${state.frames}/${state.expected}`);
+    if (!state.stream && state.frames !== state.expected) throw new Error(`Missing frames: ${state.frames}/${state.expected}`);
     state.child.stdin.end(); await state.done;
     await fs.rename(state.temporary, state.output); lastOutput = state.output;
     if (state.copyToClipboard) {

@@ -60,3 +60,40 @@ export async function hasAudio(file: string) {
   await new Promise<void>((resolve, reject) => { child.once('error', reject); child.once('close', () => resolve()); });
   return /Audio:/.test(log);
 }
+
+export type Encoder = 'h264_nvenc' | 'h264_qsv' | 'h264_amf' | 'libx264';
+let hardware: Promise<Encoder> | undefined;
+/** Finds a working GPU H.264 encoder once per session; falls back to x264. */
+export function hardwareEncoder() {
+  hardware ??= (async () => {
+    for (const encoder of ['h264_nvenc', 'h264_qsv', 'h264_amf'] as const) {
+      const child = launch(['-f', 'lavfi', '-i', 'color=black:s=1280x720:d=0.2', '-frames:v', '3', '-vf', encoder === 'h264_qsv' ? 'format=nv12' : 'format=yuv420p', '-c:v', encoder, '-f', 'null', '-']);
+      const timer = setTimeout(() => child.kill(), 8000);
+      try { await completion(child); return encoder; } catch { /* try the next encoder */ } finally { clearTimeout(timer); }
+    }
+    return 'libx264' as const;
+  })();
+  return hardware;
+}
+/**
+ * Real-time encoding for live capture and recording finalization. GPU encoders keep up with 60fps
+ * at any resolution, so Stop no longer waits for a CPU encoder backlog to drain.
+ */
+export function fastVideoArgs(encoder: Encoder, gop: number) {
+  switch (encoder) {
+    case 'h264_nvenc': return ['-pix_fmt', 'yuv420p', '-c:v', 'h264_nvenc', '-preset', 'p1', '-tune', 'll', '-rc', 'constqp', '-qp', '19', '-bf', '0', '-g', String(gop)];
+    case 'h264_qsv': return ['-pix_fmt', 'nv12', '-c:v', 'h264_qsv', '-preset', 'veryfast', '-global_quality', '21', '-bf', '0', '-g', String(gop)];
+    case 'h264_amf': return ['-pix_fmt', 'yuv420p', '-c:v', 'h264_amf', '-usage', 'lowlatency', '-quality', 'speed', '-rc', 'cqp', '-qp_i', '19', '-qp_p', '21', '-bf', '0', '-g', String(gop)];
+    default: return ['-pix_fmt', 'yuv420p', '-c:v', 'libx264', '-preset', 'ultrafast', '-tune', 'zerolatency', '-crf', '18', '-g', String(gop)];
+  }
+}
+
+/** Size of the first video stream, read from FFmpeg's input summary. */
+export async function videoSize(file: string) {
+  const child = launch(['-i', file]); let log = ''; child.stdout.resume();
+  child.stderr.on('data', chunk => { log = (log + chunk).slice(-16000); });
+  await withTimeout(new Promise<void>((resolve, reject) => { child.once('error', reject); child.once('close', () => resolve()); }), 15000, 'Video probe timed out');
+  const match = /Video:.*?(d{2,5})x(d{2,5})/.exec(log);
+  if (!match) throw new Error('No video stream');
+  return { width: Math.floor(Number(match[1]) / 2) * 2, height: Math.floor(Number(match[2]) / 2) * 2 };
+}

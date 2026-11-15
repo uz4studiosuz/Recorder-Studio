@@ -1,10 +1,10 @@
-# Recorder Studio 0.5.1: Windows qo‘llanmasi
+# Recorder Studio 0.6.0: Windows qo‘llanmasi
 
 ## Yangi build
 
-- `release/Recorder-Studio-Setup-0.5.1-x64.exe`: yangi Windows x64 installer.
+- `release/Recorder-Studio-Setup-x64.exe`: yangi Windows x64 installer.
 - `release/win-unpacked/Recorder Studio.exe`: o‘rnatmasdan ishlatish; butun `win-unpacked` papkasi kerak.
-- `release/Recorder-Studio-Portable-0.5.1-x64.exe`: bitta portable dastur.
+- `release/Recorder-Studio-Portable-x64.exe`: bitta portable dastur.
 - `npm run dist:portable`: portable build yaratadi.
 
 Eski build avtomatik yangilanmaydi. Yangi installer’dan foydalaning. Build raqamli sertifikatsiz, shu sabab Windows publisherni tasdiqlay olmaydi. Ommaviy tarqatish uchun o‘z code-signing sertifikatingizni sozlang.
@@ -39,14 +39,14 @@ Installer yaratish:
 npm run dist:win
 ```
 
-Natija: `release/Recorder-Studio-Setup-0.5.1-x64.exe` va `release/Recorder-Studio-Portable-0.5.1-x64.exe`.
+Natija: `release/Recorder-Studio-Setup-x64.exe` va `release/Recorder-Studio-Portable-x64.exe`.
 
 ```powershell
 npm run pack:win
 npm run dist:portable
 ```
 
-Birinchisi unpacked papkani, ikkinchisi `release/Recorder-Studio-Portable-0.5.1-x64.exe`ni yaratadi. Native modullar uchun x64 prebuild bor; boshqa arxitekturada manbadan build qilish zarur bo‘lsa Visual Studio Build Tools + Desktop development with C++ kerak bo‘lishi mumkin.
+Birinchisi unpacked papkani, ikkinchisi `release/Recorder-Studio-Portable-x64.exe`ni yaratadi. Native modullar uchun x64 prebuild bor; boshqa arxitekturada manbadan build qilish zarur bo‘lsa Visual Studio Build Tools + Desktop development with C++ kerak bo‘lishi mumkin.
 
 ## Start menyu va fullscreen
 
