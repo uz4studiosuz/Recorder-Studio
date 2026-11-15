@@ -1,9 +1,10 @@
-// Site settings. Download buttons resolve the newest GitHub release at runtime;
-// these stable "latest/download" links are the fallback when the API is unavailable.
+// Release links. Download buttons use the newest GitHub release (resolved at runtime);
+// these stable "latest/download" URLs are the fallback when the API is unavailable.
 window.SITE = {
   version: '0.6.0',
   owner: 'uz4studiosuz',
-  repo: 'Recorder-Studio',
+  name: 'Recorder-Studio',
+  repo: 'https://github.com/uz4studiosuz/Recorder-Studio',
   links: {
     github: 'https://github.com/uz4studiosuz/Recorder-Studio',
     issues: 'https://github.com/uz4studiosuz/Recorder-Studio/issues',
@@ -11,5 +12,6 @@ window.SITE = {
     license: 'https://github.com/uz4studiosuz/Recorder-Studio/blob/main/LICENSE',
     installer: 'https://github.com/uz4studiosuz/Recorder-Studio/releases/latest/download/Recorder-Studio-Setup-x64.exe',
     portable: 'https://github.com/uz4studiosuz/Recorder-Studio/releases/latest/download/Recorder-Studio-Portable-x64.exe',
+    checksums: 'https://github.com/uz4studiosuz/Recorder-Studio/releases/latest',
   },
 };

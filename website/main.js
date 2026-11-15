@@ -1,113 +1,163 @@
 (() => {
   const site = window.SITE ?? { links: {} };
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
 
-  // ---- Static links ----
-  const applyLinks = links => {
-    for (const a of document.querySelectorAll('[data-link]')) {
-      const url = links[a.dataset.link];
-      if (url) a.href = url;
-      if (['github', 'releases', 'issues', 'license'].includes(a.dataset.link)) { a.target = '_blank'; a.rel = 'noopener'; }
-    }
-  };
-  applyLinks(site.links ?? {});
+  // ---- Config-driven links and text ----
+  for (const a of document.querySelectorAll('[data-link]')) {
+    const url = site.links?.[a.dataset.link];
+    if (url) a.href = url;
+    if (['installer', 'portable'].includes(a.dataset.link) && url) a.setAttribute('download', '');
+  }
+  const set = (key, value) => document.querySelectorAll(`[data-text="${key}"]`).forEach(n => { n.textContent = value; });
+  if (site.version) { set('version', `v${site.version.replace(/\.0$/, '')}`); set('version-number', site.version); }
+  if (site.repo) set('repo', site.repo);
+
+  // ---- Newest GitHub release: real download links, version and sizes ----
+  if (site.owner && site.name) {
+    fetch(`https://api.github.com/repos/${site.owner}/${site.name}/releases/latest`, { headers: { Accept: 'application/vnd.github+json' } })
+      .then(response => response.ok ? response.json() : Promise.reject(new Error(String(response.status))))
+      .then(release => {
+        const find = pattern => release.assets?.find(asset => pattern.test(asset.name));
+        const assets = { installer: find(/setup.*.exe$/i), portable: find(/portable.*.exe$/i) };
+        for (const a of document.querySelectorAll('[data-link]')) {
+          const asset = assets[a.dataset.link];
+          if (asset) a.href = asset.browser_download_url;
+          if (a.dataset.link === 'releases' || a.dataset.link === 'checksums') a.href = release.html_url;
+        }
+        const version = String(release.tag_name || '').replace(/^v/, '');
+        if (version) { set('version', `v${version.replace(/.0$/, '')}`); set('version-number', version); }
+        const mb = bytes => `${Math.round(bytes / 1048576)} MB`;
+        if (assets.installer) set('size', `Installer ${mb(assets.installer.size)}${assets.portable ? ` · portable ${mb(assets.portable.size)}` : ''}`);
+      })
+      .catch(() => { /* keep the stable releases/latest/download links from site.config.js */ });
+  }
   document.querySelectorAll('[data-year]').forEach(n => { n.textContent = new Date().getFullYear(); });
 
-  // ---- Translations ----
-  const uz = {
-    'nav.features': 'Imkoniyatlar', 'nav.layouts': 'Kamera', 'nav.reels': 'Reels', 'nav.shortcuts': 'Tugmalar', 'nav.faq': 'Savollar', 'nav.download': 'Yuklab olish',
-    'hero.pill': 'Mini recorder, GPU eksport, Reels',
-    'hero.title': 'Chiroyli ekran yozuvlari.<br><span class="gradient">Butunlay bepul.</span>',
-    'hero.lead': 'Ekran, kamera va ovozingizni yozing, so‘ng silliq kursor, avtomatik yaqinlashtirish, kamera joylashuvlari va 9:16 Reels format bilan tahrirlang. GPU orqali tez eksport. Akkaunt kerak emas, hech narsa yuklanmaydi.',
-    'cta.windows': 'Windows uchun yuklab olish', 'cta.portable': 'Portable .exe', 'cta.source': 'GitHub’dagi kod',
-    'hero.meta': 'Windows 10 / 11 · 64-bit · MIT litsenziya', 'hero.all': 'Barcha versiyalar',
-    'stats.export': '1080p60 da real vaqtdan ~2 baravar tez eksport', 'stats.layouts': 'kamera joylashuvi, yozgandan keyin ham o‘zgaradi', 'stats.uploads': 'yuklash, akkaunt yoki kuzatuv', 'stats.license': 'bepul va ochiq kodli',
-    'features.eyebrow': 'Hammasi bir joyda', 'features.title': 'Video muharrirsiz yozing, bezang va ulashing.',
-    'f1.t': 'Mini recorder', 'f1.d': 'Ishga tushganda kichik suzuvchi panel ochiladi. Ekranni jonli rasmlardan tanlang, kamera va mikrofonni tekshiring, Record bosing.',
-    'f2.t': '3-2-1 sanash', 'f2.d': 'Yozish boshlanishidan oldin tayyorlaning. 0, 3 yoki 5 soniya — sanoqning o‘zi videoga tushmaydi.',
-    'f3.t': 'Kino uslubidagi kursor', 'f3.d': 'Tizim kursori o‘rniga silliq vektor kursor: bosish to‘lqinlari, yoritish va harakatsiz bo‘lganda yashirish.',
-    'f4.t': 'Avtomatik yaqinlashtirish', 'f4.d': 'Bosishlar timeline’da tahrirlanadigan silliq zoom bo‘laklariga aylanadi, o‘zingiz ham qo‘sha olasiz.',
-    'f5.t': 'Tez to‘xtatish va eksport', 'f5.d': 'Yozishda NVENC, Quick Sync yoki AMF; eksportda WebCodecs GPU kodlash. Kerak bo‘lsa CPU’ga o‘tadi.',
-    'f6.t': 'Haqiqiy tahrir', 'f6.d': 'Kesish, qisqartirish, o‘chirish, joyini almashtirish va bekor qilish. Har bir klipga alohida ko‘rinish, avtomatik saqlash.',
-    'f7.t': 'Ekranda tugmalar', 'f7.d': 'Qisqa tugmalar va yozilayotgan matn chiroyli pufakchalarda — darsliklar uchun ayni muddao.',
-    'f8.t': 'Maxfiylik birinchi', 'f8.d': 'Server ham, analitika ham yo‘q. Kamera fonini olib tashlash ham kompyuteringizda bajariladi.',
-    'layouts.eyebrow': 'Kamera joylashuvlari', 'layouts.title': 'O‘zingizni ko‘rsatishning besh usuli — xohlagan payt almashtiring.',
-    'layouts.sub': 'Ekran va kamera alohida yoziladi, shuning uchun joylashuv yozish paytida emas, tahrirda tanlanadi.',
-    'l.screen': 'Faqat ekran', 'l.overlay': 'Kamera ustida', 'l.split': 'Ikkiga bo‘lingan', 'l.camera': 'To‘liq kamera', 'l.cutout': 'Fonsiz kamera',
-    'reels.eyebrow': 'Reels · Shorts · TikTok', 'reels.title': '16:9 da bir marta yozing. 9:16 da joylang.',
-    'reels.sub': 'Loyihani 9:16 ga o‘tkazing — kadr kursoringizni kuzatadi, matn butun ekran kichrayib ketmasdan katta ko‘rinadi. Split rejimida kamera pastda turadi va ekran ham kursorni kuzatadi. Reels’da click zoom to‘xtaydi, 16:9 ga qaytsangiz yana ishlaydi.',
-    'reels.c1': 'Kursorni kuzatuvchi silliq kadr', 'reels.c2': '720×1280 dan 2160×3840 gacha eksport', 'reels.c3': 'Yoki yozishda faqat 9:16 hududni oling',
-    'how.eyebrow': 'Qanday ishlaydi', 'how.title': 'G‘oyadan eksportgacha uch qadam.',
-    'how.s1t': 'Yozing', 'how.s1d': 'Ekran yoki oynani tanlang, kamera, mikrofon yoki tizim ovozini yoqing va Record bosing.',
-    'how.s2t': 'Tahrirlang', 'how.s2d': 'Yozuv muharrirda ochiladi. Kesing, joylashuvni tanlang, fon va ramkani bezang.',
-    'how.s3t': 'Eksport qiling', 'how.s3d': '4K 60 fps gacha MP4 yoki GIF — faylga yoki to‘g‘ridan-to‘g‘ri clipboard’ga.',
-    'sc.eyebrow': 'Klaviatura tugmalari', 'sc.title': 'Tez qo‘llar, tez videolar.', 'sc.rec': 'Yozish paytida', 'sc.edit': 'Muharrirda',
-    'sc.stop': 'To‘xtatish va muharrirni ochish', 'sc.marker': 'Kursor joyiga zoom belgisi', 'sc.hide': 'Yozish panelini yashirish / ko‘rsatish',
-    'sc.play': 'Ijro / pauza', 'sc.split': 'Playhead joyida kesish', 'sc.delete': 'Tanlanganni o‘chirish', 'sc.undo': 'Bekor qilish (Ctrl+Y qaytarish)', 'sc.full': 'To‘liq ekran preview',
-    'faq.title': 'Savollarga javoblar.',
-    q1: 'Haqiqatan ham bepulmi?', a1: 'Ha. Recorder Studio MIT litsenziyasidagi ochiq kodli dastur — watermark, obuna yoki vaqt cheklovi yo‘q.',
-    q2: 'Nega Windows SmartScreen ogohlantiradi?', a2: 'Installer hali raqamli imzolanmagan. “Qo‘shimcha ma’lumot”, so‘ng “Baribir ishga tushirish” ni bosing. Kod GitHub’da ochiq.',
-    q3: 'Kuchli videokarta kerakmi?', a3: 'Yo‘q. H.264 apparat kodlashli istalgan GPU (so‘nggi 10 yildagi ko‘p Intel, NVIDIA, AMD) to‘xtatish va eksportni tezlashtiradi; aks holda avtomatik CPU ishlatiladi.',
-    q4: 'Yozuvlarim biror joyga yuklanadimi?', a4: 'Hech qachon. Yozuvlar, loyihalar va eksportlar kompyuteringizdagi Videos\\Recorder Studio papkasida qoladi.',
-    q5: 'Yozgandan keyin kamera joylashuvini o‘zgartirsa bo‘ladimi?', a5: 'Ha. Ekran va kamera alohida treklar, shuning uchun muharrirda overlay, split, to‘liq kamera, fonsiz yoki faqat ekranga o‘tasiz.',
-    'final.title': 'Keyingi videongiz ajoyib chiqsin.', 'final.sub': 'Windows 10 va 11 uchun bepul.',
-    'footer.license': 'MIT litsenziya', 'footer.releases': 'Versiyalar', 'footer.issues': 'Xato haqida xabar', 'footer.lic': 'Litsenziya',
+  // ---- Media slots: drop a file at data-src, or see a labelled placeholder ----
+  const placeholder = slot => {
+    slot.classList.add('is-empty'); slot.replaceChildren();
+    const box = document.createElement('div'); box.className = 'slot-empty';
+    const isVideo = /\.(mp4|webm|mov)$/i.test(slot.dataset.src);
+    box.innerHTML = `<span class="slot-icon">${isVideo ? '▶' : '▧'}</span><strong></strong><code></code>`;
+    box.querySelector('strong').textContent = slot.dataset.label || (isVideo ? 'Video' : 'Screenshot');
+    box.querySelector('code').textContent = `website/${slot.dataset.src}`;
+    slot.append(box);
   };
-  const captions = {
-    en: { screen: 'Just your screen, with the smooth cursor and zooms.', overlay: 'A camera bubble in any corner — it can move aside when your cursor comes close.', split: 'Screen and camera side by side; in 9:16 the camera stacks underneath.', camera: 'Talk straight to the viewer with a full-frame camera.', cutout: 'Your background removed on-device, placed over the screen.' },
-    uz: { screen: 'Faqat ekran — silliq kursor va zoom bilan.', overlay: 'Istalgan burchakdagi kamera pufakchasi — kursor yaqinlashsa chetga suriladi.', split: 'Ekran va kamera yonma-yon; 9:16 da kamera pastga tushadi.', camera: 'To‘liq kadrli kamera bilan tomoshabinga to‘g‘ridan-to‘g‘ri gapiring.', cutout: 'Foningiz kompyuterda olib tashlanib, ekran ustiga qo‘yiladi.' },
-  };
-  const english = new Map();
-  document.querySelectorAll('[data-i18n]').forEach(node => english.set(node, node.innerHTML));
-  let lang = 'en';
-  const setLang = next => {
-    lang = next === 'uz' ? 'uz' : 'en';
-    document.documentElement.lang = lang;
-    for (const [node, html] of english) {
-      const key = node.dataset.i18n;
-      node.innerHTML = lang === 'uz' && uz[key] ? uz[key] : html;
+  const videos = [];
+  for (const slot of document.querySelectorAll('.slot')) {
+    const src = slot.dataset.src; if (!src) { placeholder(slot); continue; }
+    if (/\.(mp4|webm|mov)$/i.test(src)) {
+      const video = document.createElement('video');
+      Object.assign(video, { muted: true, loop: true, playsInline: true, preload: 'metadata' });
+      video.setAttribute('muted', ''); video.setAttribute('playsinline', '');
+      if (slot.dataset.poster) video.poster = slot.dataset.poster;
+      video.addEventListener('error', () => placeholder(slot), { once: true });
+      video.src = src; slot.append(video); videos.push(video);
+    } else {
+      const img = new Image(); img.alt = slot.dataset.label || ''; img.loading = 'lazy'; img.decoding = 'async';
+      img.addEventListener('error', () => placeholder(slot), { once: true });
+      img.src = src; slot.append(img);
     }
-    document.querySelectorAll('[data-lang]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.lang === lang)));
-    updateCaption(); renderAssets();
-    try { localStorage.setItem('rs-lang', lang); } catch { /* preference only */ }
-  };
-  document.querySelectorAll('[data-lang]').forEach(b => b.addEventListener('click', () => setLang(b.dataset.lang)));
+  }
+  // Videos play only while visible.
+  const playing = new IntersectionObserver(entries => {
+    for (const e of entries) { const v = e.target; if (e.isIntersecting) v.play().catch(() => {}); else v.pause(); }
+  }, { threshold: 0.25 });
+  videos.forEach(v => playing.observe(v));
 
-  // ---- Layout demo ----
-  const stage = document.querySelector('.layout-stage'), caption = document.querySelector('[data-caption]');
-  const tabs = [...document.querySelectorAll('[data-layout]')];
-  let mode = 'overlay', timer;
-  function updateCaption() { if (caption) caption.textContent = captions[lang][mode]; }
-  const show = next => {
-    mode = next; stage.dataset.mode = next;
-    tabs.forEach(t => t.setAttribute('aria-selected', String(t.dataset.layout === next)));
-    updateCaption();
-  };
-  const cycle = () => { clearInterval(timer); if (!matchMedia('(prefers-reduced-motion: reduce)').matches) timer = setInterval(() => show(tabs[(tabs.findIndex(t => t.dataset.layout === mode) + 1) % tabs.length].dataset.layout), 4200); };
-  tabs.forEach(t => t.addEventListener('click', () => { show(t.dataset.layout); cycle(); }));
-  cycle();
+  // ---- Reveal on scroll ----
+  const reveal = new IntersectionObserver(entries => {
+    for (const e of entries) if (e.isIntersecting) { e.target.classList.add('is-visible'); reveal.unobserve(e.target); }
+  }, { threshold: 0.15, rootMargin: '0px 0px -8% 0px' });
+  document.querySelectorAll('.reveal').forEach(n => reveal.observe(n));
 
-  // ---- Latest release from GitHub ----
-  let release = null;
-  const formatSize = bytes => bytes > 0 ? `${(bytes / 1048576).toFixed(0)} MB` : '';
-  function renderAssets() {
-    const labels = lang === 'uz' ? { installer: 'O‘rnatuvchi', portable: 'O‘rnatmasdan' } : { installer: 'Installer', portable: 'No install' };
-    for (const node of document.querySelectorAll('[data-asset]')) {
-      const kind = node.dataset.asset, asset = release?.[kind];
-      node.textContent = [labels[kind], release?.tag, asset ? formatSize(asset.size) : 'x64'].filter(Boolean).join(' · ');
+  // ---- Count-up stats ----
+  const count = new IntersectionObserver(entries => {
+    for (const e of entries) {
+      if (!e.isIntersecting) continue; count.unobserve(e.target);
+      const n = e.target, to = Number(n.dataset.count), pre = n.dataset.prefix ?? '', suf = n.dataset.suffix ?? '', start = performance.now();
+      const step = now => { const t = clamp((now - start) / 1200), v = Math.round(to * (1 - Math.pow(1 - t, 3))); n.textContent = pre + v + suf; if (t < 1) requestAnimationFrame(step); };
+      reduced ? n.textContent = pre + to + suf : requestAnimationFrame(step);
     }
-    document.querySelectorAll('[data-version]').forEach(n => { n.textContent = release?.tag ?? `v${site.version}`; });
+  }, { threshold: 0.6 });
+  document.querySelectorAll('[data-count]').forEach(n => count.observe(n));
+
+  // ---- Tabs with auto-advance ----
+  for (const tabs of document.querySelectorAll('[data-tabs]')) {
+    const buttons = [...tabs.querySelectorAll('[role=tab]')], panels = [...tabs.querySelectorAll('[role=tabpanel]')], indicator = tabs.querySelector('.tab-indicator');
+    let index = 0, timer;
+    const show = i => {
+      index = i;
+      buttons.forEach((b, k) => b.setAttribute('aria-selected', String(k === i)));
+      panels.forEach((p, k) => p.classList.toggle('is-active', k === i));
+      const b = buttons[i]; indicator.style.width = `${b.offsetWidth}px`; indicator.style.transform = `translateX(${b.offsetLeft - 4}px)`;
+      panels[i].querySelector('video')?.play().catch(() => {});
+    };
+    const schedule = () => { clearInterval(timer); if (!reduced) timer = setInterval(() => show((index + 1) % buttons.length), Number(tabs.dataset.autoplay) || 6000); };
+    buttons.forEach((b, i) => b.addEventListener('click', () => { show(i); schedule(); }));
+    addEventListener('resize', () => show(index));
+    requestAnimationFrame(() => show(0)); schedule();
   }
-  setLang((() => { try { return localStorage.getItem('rs-lang') ?? (navigator.language?.toLowerCase().startsWith('uz') ? 'uz' : 'en'); } catch { return 'en'; } })());
-  if (site.owner && site.repo) {
-    fetch(`https://api.github.com/repos/${site.owner}/${site.repo}/releases/latest`, { headers: { Accept: 'application/vnd.github+json' } })
-      .then(response => response.ok ? response.json() : Promise.reject(new Error(String(response.status))))
-      .then(data => {
-        const find = pattern => data.assets?.find(asset => pattern.test(asset.name));
-        const installer = find(/setup.*\.exe$/i), portable = find(/portable.*\.exe$/i);
-        release = { tag: data.tag_name, installer, portable };
-        applyLinks({ installer: installer?.browser_download_url, portable: portable?.browser_download_url, releases: data.html_url });
-        renderAssets();
-      })
-      .catch(() => { /* keep the stable latest/download links */ });
-  }
+
+  // ---- Copy build commands ----
+  document.querySelector('[data-copy]')?.addEventListener('click', async event => {
+    const text = [...document.querySelectorAll('.terminal code')].map(n => n.innerText).join('\n').split('\n').filter(l => l.startsWith('>')).map(l => l.slice(2)).join('\n');
+    try { await navigator.clipboard.writeText(text); event.currentTarget.textContent = 'Copied'; } catch { event.currentTarget.textContent = 'Select & copy'; }
+    setTimeout(() => { event.target.textContent = 'Copy'; }, 1600);
+  });
+
+  // ---- Scroll-driven scenes ----
+  const progressBar = document.querySelector('.progress-bar'), nav = document.querySelector('.nav');
+  const hero = document.querySelector('[data-hero]');
+  const zoom = document.querySelector('[data-zoom-scroll]'), zoomInner = zoom?.querySelector('.zoom-inner'), zoomCursor = zoom?.querySelector('.zoom-cursor'), zoomValue = zoom?.querySelector('.zoom-value');
+  const steps = document.querySelector('[data-steps]'), stepItems = steps ? [...steps.querySelectorAll('.steps li')] : [], stepMedia = steps ? [...steps.querySelectorAll('.step-media')] : [], stepBar = steps?.querySelector('.steps-progress i');
+  const ratios = document.querySelector('[data-ratios]'), ratioFrame = ratios?.querySelector('.ratio-frame'), ratioLabels = ratios ? [...ratios.querySelectorAll('.ratio-labels span')] : [];
+  // Progress of a tall section through the viewport: 0 when its top reaches the top, 1 when its bottom reaches the bottom.
+  const sceneProgress = el => { const r = el.getBoundingClientRect(); return clamp(-r.top / Math.max(1, r.height - innerHeight)); };
+  const ease = t => t * t * (3 - 2 * t);
+  let activeStep = -1, ticking = false;
+  const update = () => {
+    ticking = false;
+    const max = document.documentElement.scrollHeight - innerHeight;
+    progressBar.style.transform = `scaleX(${max > 0 ? scrollY / max : 0})`;
+    nav.classList.toggle('is-scrolled', scrollY > 12);
+    if (reduced) return;
+    if (hero) {
+      const r = hero.getBoundingClientRect(), t = clamp(1 - (r.top - innerHeight * 0.15) / (innerHeight * 0.7));
+      hero.style.setProperty('--tilt', `${(1 - ease(t)) * 24}deg`);
+      hero.style.setProperty('--scale', String(0.88 + ease(t) * 0.12));
+    }
+    if (zoom) {
+      const p = sceneProgress(zoom), up = ease(clamp(p / 0.45)), down = ease(clamp((p - 0.6) / 0.35)), amount = up * (1 - down), scale = 1 + amount * 1.6;
+      // Pan towards a point right of centre, like an automatic zoom on a click.
+      zoomInner.style.transform = `scale(${scale}) translate(${-amount * 14}%, ${-amount * 8}%)`;
+      zoomCursor.style.transform = `translate(${48 + Math.sin(p * Math.PI) * 14}%, ${42 + amount * 8}%) scale(${1 + amount * 0.5})`;
+      zoomValue.textContent = `${scale.toFixed(1)}×`;
+    }
+    if (steps && stepItems.length) {
+      const p = sceneProgress(steps), i = Math.min(stepItems.length - 1, Math.floor(p * stepItems.length));
+      stepBar.style.transform = `scaleY(${p})`;
+      if (i !== activeStep) {
+        activeStep = i;
+        stepItems.forEach((li, k) => li.classList.toggle('is-active', k === i));
+        stepMedia.forEach((m, k) => { m.classList.toggle('is-active', k === i); const v = m.querySelector('video'); if (v) k === i ? v.play().catch(() => {}) : v.pause(); });
+      }
+    }
+    if (ratios && ratioFrame) {
+      // 16:9 → 9:16 as you scroll (the app offers landscape and Reels).
+      const p = sceneProgress(ratios), a = ease(clamp((p - 0.2) / 0.6));
+      ratioFrame.style.setProperty('--ratio', String((16 / 9) * (1 - a) + (9 / 16) * a));
+      const label = p < 0.5 ? 0 : 1;
+      ratioLabels.forEach((s, k) => s.classList.toggle('is-active', k === label));
+    }
+  };
+  const onScroll = () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } };
+  addEventListener('scroll', onScroll, { passive: true }); addEventListener('resize', onScroll); update();
+
+  // Steps are clickable too.
+  stepItems.forEach((li, k) => li.addEventListener('click', () => {
+    const r = steps.getBoundingClientRect(), top = scrollY + r.top + (r.height - innerHeight) * ((k + 0.5) / stepItems.length);
+    scrollTo({ top, behavior: reduced ? 'auto' : 'smooth' });
+  }));
 })();
